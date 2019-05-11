@@ -6,37 +6,48 @@ const ExtractTextPlugin = require( 'mini-css-extract-plugin' );
 const Dotenv = require( 'dotenv-webpack' );
 const autoprefixer = require( 'autoprefixer' )
 const postcssnested = require( 'postcss-nested' )
+const UglifyJSPlugin = require( 'uglifyjs-webpack-plugin' )
 
 module.exports = {
   entry : [ 'babel-polyfill', './src/index.js' ],
-  mode : 'development',
   output : { 
-    path : __dirname, 
-    filename : 'bundle.js', 
-    publicPath : '/'
+    path : `${__dirname}/dist/`, 
+    filename : 'bundle.js',
+    publicPath : '/' 
   },
   resolve : {
     extensions : [ '*', '.js', '.jsx', '.css', '.less' ],
-  },
-  devServer : {
-    watchOptions : { watch : false, ignored : /node_modules/ },
   },
 
   //  <meta http-equiv="Content-Security-Policy" content="default-src 'self'  *.bootstrapcdn.com *.googleapis.com *.cox2m.com *.google-analytics.com 'unsafe-inline' 'unsafe-eval' blob: wss://0.0.0.0:8589 data: *.gstatic.com *.mapbox.com">
   // Necessary plugins for hot load
   plugins : [ 
-    new webpack.NoEmitOnErrorsPlugin(),
-    new webpack.HotModuleReplacementPlugin(),
     new ExtractTextPlugin( 'style.css', { allChunks : true } ),
+    new UglifyJSPlugin( { uglifyOptions : {
+      compress : {
+        warnings : false,
+        conditionals : true,
+        unused : true,
+        comparisons : false,
+        sequences : true,
+        dead_code : true,
+        evaluate : true,
+        if_return : true,
+        join_vars : true
+      },
+      output : {
+        comments : false
+      }
+    } } ),
     new Dotenv( {
       path : './.env', // Path to .env file (this is the default) 
     } ),
     new webpack.DefinePlugin( {
-      'process.env.NODE_ENV' : JSON.stringify( 'development' )
+      'process.env.NODE_ENV' : JSON.stringify( 'production' )
     } ),
     new webpack.LoaderOptionsPlugin( {
       options : {
-        context : __dirname,
+        context : `${__dirname}/dist/`,
         postcss : [
           autoprefixer,
           postcssnested
@@ -83,7 +94,7 @@ module.exports = {
         use : [
           'style-loader',
           'css-loader',
-          'less-loader', 
+          'less-loader', // if you want .less support
         ]
       },
       {
@@ -101,4 +112,3 @@ module.exports = {
     ],
   }
 };
-
